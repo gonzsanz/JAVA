@@ -1,0 +1,50 @@
+CREATE OR REPLACE PROCEDURE pais_continente_siglas (
+    pconti    IN   VARCHAR2,
+    psiglas   IN   VARCHAR2
+) AS
+
+    CURSOR c1 IS
+    SELECT
+        p.nombre    AS npais,
+        p.capital   AS capi
+    FROM
+        pais           p,
+        pertenece_a    pe,
+        organizacion   o
+    WHERE
+        p.cod_pais = pe.cod_pais
+        AND pe.cod_organizacion = o.cod_organizacion
+        AND continente LIKE pconti
+        AND siglas LIKE psiglas;
+
+    total NUMBER;
+    error_pais EXCEPTION;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO total
+    FROM
+        pais           p,
+        pertenece_a    pe,
+        organizacion   o
+    WHERE
+        p.cod_pais = pe.cod_pais
+        AND pe.cod_organizacion = o.cod_organizacion
+        AND continente LIKE pconti
+        AND siglas LIKE psiglas;
+
+    IF total = 0 THEN
+        RAISE error_pais;
+    END IF;
+    
+    FOR reg_pais IN c1 LOOP 
+        dbms_output.put_line(reg_pais.npais || '        '|| reg_pais.capi);
+    END LOOP;
+
+EXCEPTION
+    WHEN error_pais THEN
+        raise_application_error(-20000, 'No hay paises del contiente '|| pconti || ' pertenecientes a '|| psiglas);
+    WHEN OTHERS THEN
+        dbms_output.put_line('Error '|| sqlcode || sqlerrm);
+        
+END pais_continente_siglas;
